@@ -23,7 +23,7 @@ if "user_email" not in st.session_state:
                 state=None
             )
         )
-        st.query_params()  
+        st.query_params.clear()  
         st.markdown(f"<meta http-equiv='refresh' content='0;url={auth_url}'>", unsafe_allow_html=True)
         st.stop()
 
