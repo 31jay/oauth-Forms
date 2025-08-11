@@ -1,9 +1,17 @@
 import streamlit as st
 from httpx_oauth.clients.google import GoogleOAuth2
 import toml
-import os
 import asyncio
 import httpx
+import os
+
+IS_LOCAL = os.environ.get("IS_LOCAL", "false").lower() == "true"
+
+if IS_LOCAL:
+    redirect_uri = "http://localhost:8501/oauth2callback"
+else:
+    redirect_uri = "https://ksc-at-khec.streamlit.app/oauth2callback"
+
 
 st.title("Google Sign-In Protected Form")
 
@@ -12,26 +20,16 @@ secrets = toml.load(".streamlit/secrets.toml")
 client_id = secrets["auth"]["client_id"]
 client_secret = secrets["auth"]["client_secret"]
 
-# Detect if running locally or on Streamlit Cloud by environment variable or hostname
-IS_LOCAL = st.runtime.exists() and st.runtime.get_app_url().startswith("http://localhost")
-
-# Dynamically set redirect URI depending on environment
-if IS_LOCAL:
-    redirect_uri = "http://localhost:8501/oauth2callback"
-else:
-    # Your deployed Streamlit app URL
-    redirect_uri = "https://ksc-at-khec.streamlit.app/oauth2callback"
-
 google_client = GoogleOAuth2(client_id, client_secret)
 
 def clear_query_params_and_rerun():
-    st.experimental_set_query_params()
+    st.query_params = {}
     st.experimental_rerun()
 
 if "user_email" not in st.session_state:
     st.write("Please sign in with Google to continue.")
 
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
 
     # Handle callback when code is present in query params
     if "code" in query_params:
