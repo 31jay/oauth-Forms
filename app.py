@@ -1,74 +1,34 @@
 import streamlit as st
-from httpx_oauth.clients.google import GoogleOAuth2
-import toml
-import asyncio
-import httpx
-import os
+from google_auth_oauthlib.flow import InstalledAppFlow
+import requests
 
-IS_LOCAL = os.environ.get("IS_LOCAL", "false").lower() == "true"
+client_id = st.secrets["auth"]["client_id"]
+client_secret = st.secrets["auth"]["client_secret"]
 
-if IS_LOCAL:
-    redirect_uri = "http://localhost:8501/oauth2callback"
+def login_callback():
+    flow = InstalledAppFlow.from_client_config(
+        {
+            "web": {
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uris": ["https://ksc-at-khec.streamlit.app"],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token"
+            }
+        },
+        scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"]
+    )
+    credentials = flow.run_local_server(port=9000)
+    st.session_state["credentials"] = credentials
+
+if "credentials" not in st.session_state:
+    st.button("Login with Google", type="primary", on_click=login_callback)
 else:
-    redirect_uri = "https://ksc-at-khec.streamlit.app/oauth2callback"
+    # Get user info
+    resp = requests.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        params={"alt": "json"},
+        headers={"Authorization": f"Bearer {st.session_state['credentials'].token}"}
+    )
+    st.json(resp.json())
 
-
-st.title("Google Sign-In Protected Form")
-
-# Load secrets from .streamlit/secrets.toml
-secrets = toml.load(".streamlit/secrets.toml")
-client_id = secrets["auth"]["client_id"]
-client_secret = secrets["auth"]["client_secret"]
-
-google_client = GoogleOAuth2(client_id, client_secret)
-
-def clear_query_params_and_rerun():
-    st.query_params = {}
-    st.experimental_rerun()
-
-if "user_email" not in st.session_state:
-    st.write("Please sign in with Google to continue.")
-
-    query_params = st.query_params
-
-    # Handle callback when code is present in query params
-    if "code" in query_params:
-        code = query_params["code"][0] if isinstance(query_params["code"], list) else query_params["code"]
-        try:
-            token = asyncio.run(google_client.get_access_token(code, redirect_uri))
-            access_token = token["access_token"]
-            userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
-            response = httpx.get(userinfo_url, headers={"Authorization": f"Bearer {access_token}"})
-            if response.status_code == 200:
-                user_info = response.json()
-                st.session_state["user_email"] = user_info["email"]
-                clear_query_params_and_rerun()
-            else:
-                st.error(f"Failed to fetch user info from Google. Response: {response.text}")
-        except Exception as e:
-            st.error(f"Google OAuth failed: {e}")
-            clear_query_params_and_rerun()
-
-    else:
-        if st.button("Sign in with Google"):
-            auth_url = asyncio.run(
-                google_client.get_authorization_url(
-                    redirect_uri,
-                    scope=["openid", "email", "profile"],
-                    state=None
-                )
-            )
-            st.markdown(f"<meta http-equiv='refresh' content='0;url={auth_url}'>", unsafe_allow_html=True)
-            st.stop()
-
-else:
-    st.write(f"Signed in as: {st.session_state['user_email']}")
-    with st.form("protected_form"):
-        name = st.text_input("Name")
-        message = st.text_area("Message")
-        if st.form_submit_button("Submit"):
-            st.success("Form submitted!")
-    if st.button("Log out"):
-        del st.session_state["user_email"]
-        clear_query_params_and_rerun()
-        st.success("Logged out successfully!")
