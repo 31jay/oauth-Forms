@@ -56,7 +56,7 @@ SCOPES = [
 ]
 
 # Redirect URI must match your deployed app URL exactly
-REDIRECT_URI = "https://your-username-your-app-name.streamlit.app"  # No trailing slash
+REDIRECT_URI = "https://ksc-at-khec.streamlit.app"  
 
 # Construct client config dynamically
 CLIENT_SECRETS = {
