@@ -1,5 +1,6 @@
 import streamlit as st
 import re
+import json
 
 def initialize_session_state():
     """Initialize session state variables"""
@@ -11,6 +12,26 @@ def initialize_session_state():
         st.session_state.show_exec_modal = True
     if "form_submitted" not in st.session_state:
         st.session_state.form_submitted = False
+    if "data" not in st.session_state:
+        try:
+            with open("team_guidelines.json") as f:
+                st.session_state.data = json.load(f)
+        except FileNotFoundError:
+            st.error("⚠️ team_guidelines.json not found. Please ensure the file exists.")
+            st.session_state.data = {}
+        except Exception as e:
+            st.error(f"⚠️ Error loading team_guidelines.json: {str(e)}")
+            st.session_state.data = {}
+    if "circle_data" not in st.session_state:
+        try:
+            with open("circle_info.json") as f:
+                st.session_state.circle_data = json.load(f)
+        except FileNotFoundError:
+            st.error("⚠️ circle_info.json not found. Please ensure the file exists.")
+            st.session_state.circle_data = {}
+        except Exception as e:
+            st.error(f"⚠️ Error loading circle_info.json: {str(e)}")
+            st.session_state.circle_data = {}
 
 def validate_form_data(name, crn, contact, email):
     """Validate form inputs and return errors"""

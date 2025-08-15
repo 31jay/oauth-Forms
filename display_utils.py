@@ -1,16 +1,4 @@
 import streamlit as st
-import json
-
-FILE = "team_guidelines.json"
-CIRCLE_INFO_FILE = "circle_info.json"
-
-# Load team guidelines
-with open(FILE) as f:
-    st.session_state.data = json.load(f)
-
-# Load circle and executive info
-with open(CIRCLE_INFO_FILE) as f:
-    st.session_state.circle_data = json.load(f)
 
 def add_custom_css():
     """Add custom CSS for better mobile experience and clean styling"""
@@ -203,7 +191,7 @@ def display_executive_modal():
             st.markdown("### 👥 Meet Our Executive Team")
             st.markdown("---")
             
-            exec_list = list(st.session_state.circle_data["executive_members"].items())
+            exec_list = list(st.session_state.circle_data.get("executive_members", {}).items())
             
             for i in range(0, len(exec_list), 2):
                 cols = st.columns(2)
@@ -233,30 +221,30 @@ def display_exec_toggle_button():
 def display_team_guidelines():
     """Display team guidelines using Streamlit components"""
     if st.session_state.selectedTeam:
-        team_info = st.session_state.data[st.session_state.selectedTeam]
+        team_info = st.session_state.data.get(st.session_state.selectedTeam, {})
         
         with st.container():
             st.markdown("### 📋 " + st.session_state.selectedTeam)
             
             with st.expander("✨ Why Join?", expanded=True):
-                st.write(team_info["Why Join"])
+                st.write(team_info.get("Why Join", ""))
             
             with st.expander("🎯 Key Responsibilities", expanded=True):
-                for responsibility in team_info["Key Responsibilities"]:
+                for responsibility in team_info.get("Key Responsibilities", []):
                     st.write(f"• {responsibility}")
             
             with st.expander("⚠️ Why Avoid?", expanded=True):
-                st.write(team_info["Why Avoid"])
+                st.write(team_info.get("Why Avoid", ""))
     else:
         with st.container():
             st.markdown("### 🌟 Knowledge Sharing Circle")
             
             with st.expander("📖 About Us", expanded=True):
-                st.write(st.session_state.circle_data["circle_info"]["about"])
+                st.write(st.session_state.circle_data.get("circle_info", {}).get("about", ""))
             
             with st.expander("🎯 Our Mission", expanded=True):
-                for mission_item in st.session_state.circle_data["circle_info"]["mission"]:
+                for mission_item in st.session_state.circle_data.get("circle_info", {}).get("mission", []):
                     st.write(f"• {mission_item}")
             
             with st.expander("🔮 Vision", expanded=True):
-                st.write(st.session_state.circle_data["circle_info"]["vision"])
+                st.write(st.session_state.circle_data.get("circle_info", {}).get("vision", ""))
