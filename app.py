@@ -1,95 +1,121 @@
 import streamlit as st
-from google_auth_oauthlib.flow import Flow
-import google.auth.transport.requests
-import requests
+from display_utils import add_custom_css, display_header, display_executive_modal, display_exec_toggle_button, display_team_guidelines
+from individual_form import individual_form
+from team_form import team_form
+from auth_service import initialize_auth, get_user_info
+from utils import initialize_session_state
 
-# -----------------------
-# CONFIG
-# -----------------------
-CLIENT_ID = st.secrets["gcp_oauth"]["client_id"]
-CLIENT_SECRET = st.secrets["gcp_oauth"]["client_secret"]
-REDIRECT_URI = st.secrets["gcp_oauth"]["redirect_uri"]
+def main():
+    # Initialize session state
+    initialize_session_state()
 
-SCOPES = [
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/userinfo.email",
-    "openid"
-]
-
-st.set_page_config(page_title="Google Login Demo", page_icon="🔑")
-
-# -----------------------
-# SESSION STATE
-# -----------------------
-if "credentials" not in st.session_state:
-    st.session_state.credentials = None
-
-# -----------------------
-# LOGIN FLOW
-# -----------------------
-if not st.session_state.credentials:
-    st.write("## 🔑 Login with Google")
-
-    # Construct Flow using client_id and client_secret
-    flow = Flow.from_client_config(
-        client_config={
-            "web": {
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [REDIRECT_URI]
-            }
-        },
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
+    # Page configuration
+    st.set_page_config(
+        page_title="Knowledge Sharing Circle - Team Selection",
+        page_icon="🌟",
+        layout="wide",
+        initial_sidebar_state="auto",
+        menu_items={
+            'About': "Knowledge Sharing Circle - Building communities through shared learning",
+            'Report a bug': None,
+            'Get Help': 'mailto:support@knowledgesharingcircle.org'
+        }
     )
 
-    auth_url, _ = flow.authorization_url(prompt="consent")
-    st.markdown(f"[Click here to Login with Google]({auth_url})")
+    # Initialize authentication
+    initialize_auth()
 
-    # Fixed: Get code as string, not list
-    code = st.query_params.get("code")
-    if code:
-        try:
-            # Use code directly, not code[0]
-            flow.fetch_token(code=code)
-            st.session_state.credentials = flow.credentials
+    # Add custom CSS
+    add_custom_css()
 
-            # Clear the code param to prevent loop
-            st.query_params.clear()
-            st.rerun()
-        except Exception as e:
-            st.error(f"Login failed: {e}")
-            # Clear params to allow retry
-            st.query_params.clear()
-            st.rerun()
+    # Get user info
+    user_info = get_user_info()
 
-# -----------------------
-# SHOW USER INFO
-# -----------------------
-else:
-    creds = st.session_state.credentials
-    request_session = requests.Session()
-    token_request = google.auth.transport.requests.Request(session=request_session)
+    # Check if form is submitted
+    if st.session_state.get("form_submitted", False):
+        if st.session_state.get("submission_type") == "individual":
+            st.success("🎉 Individual application submitted successfully!")
+            if st.session_state.get("email_sent", False):
+                st.success("📧 Confirmation email sent to your registered email address!")
+            else:
+                st.warning("⚠️ Application saved but confirmation email could not be sent.")
+        else:
+            team_name = st.session_state.get("team_name", "Your Team")
+            member_count = st.session_state.get("member_count", 1)
+            st.success(f"🎉 Team application submitted successfully!")
+            st.success(f"Team: **{team_name}** with **{member_count} members**")
+            successful_emails = st.session_state.get("successful_emails", 0)
+            total_members = st.session_state.get("member_count", 1)
+            if successful_emails == total_members:
+                st.success("📧 Confirmation emails sent to all team members!")
+            elif successful_emails > 0:
+                st.success(f"📧 Confirmation emails sent to {successful_emails} out of {total_members} team members!")
+                st.warning("⚠️ Some confirmation emails could not be sent.")
+            else:
+                st.warning("⚠️ Team application saved but confirmation emails could not be sent.")
+        st.balloons()
+        return
 
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(token_request)
+    # Display header
+    display_header()
 
-    # Fetch user info from Google API
-    user_info = requests.get(
-        "https://www.googleapis.com/oauth2/v1/userinfo",
-        params={"alt": "json"},
-        headers={"Authorization": f"Bearer {creds.token}"}
-    ).json()
+    # Executive toggle button
+    display_exec_toggle_button()
 
-    st.success("✅ Logged in successfully!")
-    st.write("### 👤 Your Google Profile Info")
-    st.write(f"**Name:** {user_info.get('name')}")
-    st.write(f"**Email:** {user_info.get('email')}")
-    st.image(user_info.get("picture", ""), width=100)
+    # Executive modal
+    display_executive_modal()
 
-    if st.button("Logout"):
-        st.session_state.credentials = None
-        st.query_params.clear()
-        st.rerun()
+    # Important note
+    if not st.session_state.show_exec_modal:
+        st.info("""
+        📢 **Important Note:** Students currently in exams are also encouraged to fill this form. 
+        We can schedule meetings later as per your convenience and availability.
+        """)
+
+        # Team selection
+        st.markdown("### 🎯 Select Your Team")
+        team = st.selectbox(
+            "Choose your preferred team*", 
+            [""] + list(st.session_state.data.keys()), 
+            key="team_selectbox",
+            help="Select the team you want to join. Guidelines will appear on the right."
+        )
+
+        if team != st.session_state.selectedTeam:
+            st.session_state.selectedTeam = team
+
+        if st.session_state.selectedTeam:
+            st.success(f"Please Review the guidelines for **{st.session_state.selectedTeam}**")
+        else:
+            st.warning("⚠️ Please select a team to continue")
+
+        st.markdown("---")
+
+        # Create responsive columns - Guidelines LEFT, Forms RIGHT
+        if st.session_state.selectedTeam:  # Only show forms if team is selected
+            col1, col2 = st.columns([1, 2])
+
+            with col1:
+                display_team_guidelines()
+
+            with col2:
+                if user_info:
+                    selected = st.radio(
+                        '📝 Registration Type:', 
+                        options=['Individual', 'Team'], 
+                        horizontal=True,
+                        help="Individual: Solo application | Team: Group application (max 5 members)"
+                    )
+
+                    if selected == 'Individual':
+                        individual_form(user_info["email"])
+                    else:
+                        team_form(user_info["email"])
+                else:
+                    st.error("⚠️ Please log in with Google to continue.")
+
+        else:
+            display_team_guidelines()
+
+if __name__ == "__main__":
+    main()
