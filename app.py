@@ -51,12 +51,18 @@ if not st.session_state.credentials:
     # New Streamlit API for query params
     code = st.query_params.get("code")
     if code:
-        flow.fetch_token(code=code[0])
-        st.session_state.credentials = flow.credentials
+        try:
+            flow.fetch_token(code=code[0])
+            st.session_state.credentials = flow.credentials
 
-        # Clear the code param to prevent loop
-        st.experimental_set_query_params()
-        st.stop()  # stop execution; Streamlit reloads
+            # Clear the code param immediately to prevent reuse
+            st.experimental_set_query_params()
+            st.stop()  # Stop so Streamlit reloads without the old code
+        except Exception as e:
+            st.error(f"Login failed: {e}")
+            # Clear params to allow retry
+            st.experimental_set_query_params()
+            st.stop()
 
 # -----------------------
 # SHOW USER INFO
