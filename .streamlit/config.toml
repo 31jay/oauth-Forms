@@ -1,9 +1,23 @@
-[server]
-enableXsrfProtection = true
-
 [theme]
-primaryColor = "#009688"
-backgroundColor = "#f5f5f5"
-secondaryBackgroundColor = "#e0e0e0"
+primaryColor = "#FF6B35"
+backgroundColor = "#FAFAFA"
+secondaryBackgroundColor = "#E8F4FD"
 textColor = "#262730"
 font = "sans serif"
+
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+
+[global]
+dataFrameSerialization = "legacy"
+
+[ui]
+hideTopBar = false
+hideSidebarNav = false
