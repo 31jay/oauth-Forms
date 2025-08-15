@@ -1,0 +1,1 @@
+https://ksc.streamlit.app/oauth2callback
