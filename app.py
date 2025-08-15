@@ -30,7 +30,7 @@ if "credentials" not in st.session_state:
 if not st.session_state.credentials:
     st.write("## 🔑 Login with Google")
 
-    # Construct Flow manually using client_id and client_secret
+    # Construct Flow using client_id and client_secret
     flow = Flow.from_client_config(
         client_config={
             "web": {
@@ -48,12 +48,15 @@ if not st.session_state.credentials:
     auth_url, _ = flow.authorization_url(prompt="consent")
     st.markdown(f"[Click here to Login with Google]({auth_url})")
 
-    code = st.experimental_get_query_params().get("code")
+    # New Streamlit API for query params
+    code = st.query_params.get("code")
     if code:
         flow.fetch_token(code=code[0])
-        credentials = flow.credentials
-        st.session_state.credentials = credentials
-        st.experimental_rerun()
+        st.session_state.credentials = flow.credentials
+
+        # Clear the code param to prevent loop
+        st.experimental_set_query_params()
+        st.stop()  # stop execution; Streamlit reloads
 
 # -----------------------
 # SHOW USER INFO
@@ -66,6 +69,7 @@ else:
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(token_request)
 
+    # Fetch user info from Google API
     user_info = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
         params={"alt": "json"},
@@ -74,10 +78,11 @@ else:
 
     st.success("✅ Logged in successfully!")
     st.write("### 👤 Your Google Profile Info")
-    st.write(f"**Name:** {user_info['name']}")
-    st.write(f"**Email:** {user_info['email']}")
-    st.image(user_info["picture"], width=100)
+    st.write(f"**Name:** {user_info.get('name')}")
+    st.write(f"**Email:** {user_info.get('email')}")
+    st.image(user_info.get("picture", ""), width=100)
 
     if st.button("Logout"):
         st.session_state.credentials = None
-        st.experimental_rerun()
+        st.experimental_set_query_params()
+        st.stop()
