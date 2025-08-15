@@ -48,21 +48,22 @@ if not st.session_state.credentials:
     auth_url, _ = flow.authorization_url(prompt="consent")
     st.markdown(f"[Click here to Login with Google]({auth_url})")
 
-    # New Streamlit API for query params
+    # Fixed: Get code as string, not list
     code = st.query_params.get("code")
     if code:
         try:
-            flow.fetch_token(code=code[0])
+            # Use code directly, not code[0]
+            flow.fetch_token(code=code)
             st.session_state.credentials = flow.credentials
 
-            # Clear the code param immediately to prevent reuse
-            st.experimental_set_query_params()
-            st.stop()  # Stop so Streamlit reloads without the old code
+            # Clear the code param to prevent loop
+            st.query_params.clear()
+            st.rerun()
         except Exception as e:
             st.error(f"Login failed: {e}")
             # Clear params to allow retry
-            st.experimental_set_query_params()
-            st.stop()
+            st.query_params.clear()
+            st.rerun()
 
 # -----------------------
 # SHOW USER INFO
@@ -90,5 +91,5 @@ else:
 
     if st.button("Logout"):
         st.session_state.credentials = None
-        st.experimental_set_query_params()
-        st.stop()
+        st.query_params.clear()
+        st.rerun()
