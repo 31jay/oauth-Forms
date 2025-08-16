@@ -50,7 +50,7 @@ def validate_form_data(name, crn, contact, email):
     if not contact.strip():
         errors.append("Contact number is required")
     elif not re.match(r"^(97|98)\d{8}$", contact):
-        errors.append("Please enter a valid contact number (10 digits starting with 97 or 98)")
+        errors.append("Please enter a valid contact number")
     
     if not email.strip():
         errors.append("Email is required")

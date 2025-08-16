@@ -20,7 +20,7 @@ def initialize_auth():
     ]
 
     if not st.session_state.credentials:
-        st.write("## 🔑 Login with Google")
+        # st.write("## 🔑 Login with Google")
 
         # Construct Flow
         flow = Flow.from_client_config(
@@ -38,7 +38,8 @@ def initialize_auth():
         )
 
         auth_url, _ = flow.authorization_url(prompt="consent")
-        st.markdown(f"[Click here to Login with Google]({auth_url})")
+        if st.button("Login with Google"):
+            st.markdown(f"<meta http-equiv='refresh' content='0; url={auth_url}'>", unsafe_allow_html=True)
 
         # Get code as string
         code = st.query_params.get("code")

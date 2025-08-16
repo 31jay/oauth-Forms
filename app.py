@@ -14,11 +14,11 @@ def main():
         page_title="Knowledge Sharing Circle - Team Selection",
         page_icon="🌟",
         layout="wide",
-        initial_sidebar_state="auto",
+        initial_sidebar_state="collapsed",
         menu_items={
             'About': "Knowledge Sharing Circle - Building communities through shared learning",
             'Report a bug': None,
-            'Get Help': 'mailto:support@knowledgesharingcircle.org'
+            'Get Help': 'mailto:knowledgesharingcirclekhec@gmail.com'
         }
     )
 
