@@ -192,7 +192,7 @@ def display_executive_modal():
             st.markdown("---")
             
             try:
-                st.image("assets/executives.png", use_column_width=True)
+                st.image("assets/executives.png")
             except FileNotFoundError:
                 st.error("⚠️ Image file 'assets/executives.png' not found. Please ensure the file exists.")
             except Exception as e:
