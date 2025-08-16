@@ -38,8 +38,7 @@ def initialize_auth():
         )
 
         auth_url, _ = flow.authorization_url(prompt="consent")
-        if st.button("Login with Google"):
-            st.markdown(f"<meta http-equiv='refresh' content='0; url={auth_url}'>", unsafe_allow_html=True)
+        st.markdown(f"[Click here to Login with Google]({auth_url})")
 
         # Get code as string
         code = st.query_params.get("code")
