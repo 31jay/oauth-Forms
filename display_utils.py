@@ -179,7 +179,7 @@ def display_header():
     """, unsafe_allow_html=True)
 
 def display_executive_modal():
-    """Display executive members modal using Streamlit components"""
+    """Display executive members modal with an image using Streamlit components"""
     if st.session_state.show_exec_modal:
         with st.container():
             col1, col2, col3 = st.columns([4, 1, 1])
@@ -191,23 +191,12 @@ def display_executive_modal():
             st.markdown("### 👥 Meet Our Executive Team")
             st.markdown("---")
             
-            exec_list = list(st.session_state.circle_data.get("executive_members", {}).items())
-            
-            for i in range(0, len(exec_list), 2):
-                cols = st.columns(2)
-                
-                for j, col in enumerate(cols):
-                    if i + j < len(exec_list):
-                        position, member_info = exec_list[i + j]
-                        
-                        with col:
-                            with st.container():
-                                st.markdown(f"**{member_info['name']}**")
-                                st.markdown(f"*{position}*")
-                                st.write(f"📧 {member_info['contact']}")
-                                st.write(f"🎓 {member_info['department']}")
-                                st.caption(member_info['role_description'])
-                                st.markdown("---")
+            try:
+                st.image("assets/executives.png", use_column_width=True)
+            except FileNotFoundError:
+                st.error("⚠️ Image file 'assets/executives.png' not found. Please ensure the file exists.")
+            except Exception as e:
+                st.error(f"⚠️ Error loading image: {str(e)}")
 
 def display_exec_toggle_button():
     """Display centered button to show executive info"""
