@@ -178,15 +178,16 @@ def display_header():
     </div>
     """, unsafe_allow_html=True)
 
-def display_executive_modal():
+def display_executive_modal(force_show=False):
     """Display executive members modal with an image using Streamlit components"""
-    if st.session_state.show_exec_modal:
+    if st.session_state.show_exec_modal or force_show:
         with st.container():
-            col1, col2, col3 = st.columns([4, 1, 1])
-            with col3:
-                if st.button("✖️ Close", key="close_exec_modal", use_container_width=True):
-                    st.session_state.show_exec_modal = False
-                    st.rerun()
+            if not force_show:
+                col1, col2, col3 = st.columns([4, 1, 1])
+                with col3:
+                    if st.button("✖️ Close", key="close_exec_modal", use_container_width=True):
+                        st.session_state.show_exec_modal = False
+                        st.rerun()
             
             st.markdown("### 👥 Meet Our Executive Team")
             st.markdown("---")
@@ -207,33 +208,46 @@ def display_exec_toggle_button():
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
+def display_circle_info():
+    """Display circle information using Streamlit components"""
+    with st.container():
+        st.markdown("### 🌟 Knowledge Sharing Circle")
+        
+        with st.expander("📖 About Us", expanded=True):
+            st.write(st.session_state.circle_data.get("circle_info", {}).get("about", ""))
+        
+        with st.expander("🎯 Our Mission", expanded=True):
+            for mission_item in st.session_state.circle_data.get("circle_info", {}).get("mission", []):
+                st.write(f"• {mission_item}")
+        
+        with st.expander("🔮 Vision", expanded=True):
+            st.write(st.session_state.circle_data.get("circle_info", {}).get("vision", ""))
+
 def display_team_guidelines():
     """Display team guidelines using Streamlit components"""
-    if st.session_state.selectedTeam:
-        team_info = st.session_state.data.get(st.session_state.selectedTeam, {})
-        
+    selected_teams = st.session_state.get("selectedTeams", [])
+    
+    if selected_teams:
         with st.container():
-            st.markdown("### 📋 " + st.session_state.selectedTeam)
+            st.markdown(f"### 📋 Guidelines for Selected Teams")
             
-            with st.expander("✨ Why Join?", expanded=True):
-                st.write(team_info.get("Why Join", ""))
-            
-            with st.expander("🎯 Key Responsibilities", expanded=True):
-                for responsibility in team_info.get("Key Responsibilities", []):
-                    st.write(f"• {responsibility}")
-            
-            with st.expander("⚠️ Why Avoid?", expanded=True):
-                st.write(team_info.get("Why Avoid", ""))
+            for team in selected_teams:
+                team_info = st.session_state.data.get(team, {})
+                
+                with st.expander(f"🎯 {team}", expanded=len(selected_teams) == 1):
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.markdown("**✨ Why Join?**")
+                        st.write(team_info.get("Why Join", ""))
+                    
+                    with col2:
+                        st.markdown("**📝 Key Responsibilities**")
+                        for responsibility in team_info.get("Key Responsibilities", []):
+                            st.write(f"• {responsibility}")
+                    
+                    with col3:
+                        st.markdown("**⚠️ Why Avoid?**")
+                        st.write(team_info.get("Why Avoid", ""))
     else:
-        with st.container():
-            st.markdown("### 🌟 Knowledge Sharing Circle")
-            
-            with st.expander("📖 About Us", expanded=True):
-                st.write(st.session_state.circle_data.get("circle_info", {}).get("about", ""))
-            
-            with st.expander("🎯 Our Mission", expanded=True):
-                for mission_item in st.session_state.circle_data.get("circle_info", {}).get("mission", []):
-                    st.write(f"• {mission_item}")
-            
-            with st.expander("🔮 Vision", expanded=True):
-                st.write(st.session_state.circle_data.get("circle_info", {}).get("vision", ""))
+        display_circle_info()

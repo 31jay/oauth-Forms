@@ -66,6 +66,91 @@ class SheetsService:
             logger.error(f"Error ensuring headers: {str(e)}")
             raise
     
+    def check_existing_registrations(self, email: str) -> Dict[str, Any]:
+        """Check if email exists in either individual or team sheets"""
+        try:
+            if not self.client:
+                logger.error("Google Sheets client not initialized")
+                return {"found": False, "teams": [], "registrations": []}
+            
+            registrations = []
+            all_teams = []
+            
+            # Check individual sheet
+            try:
+                individual_sheet = self.client.open_by_key(INDIVIDUAL_SHEET_ID)
+                individual_worksheet = individual_sheet.get_worksheet(0)
+                individual_records = individual_worksheet.get_all_records()
+                
+                for i, record in enumerate(individual_records):
+                    if record.get("Email", "").lower() == email.lower():
+                        # Handle multiple teams (stored as comma-separated or single team)
+                        selected_team = record.get("Selected Team", "")
+                        if "," in selected_team:
+                            teams = [t.strip() for t in selected_team.split(",")]
+                        else:
+                            teams = [selected_team] if selected_team else []
+                        
+                        all_teams.extend(teams)
+                        registrations.append({
+                            "id": i + 1,
+                            "type": "individual",
+                            "teams": teams,
+                            "timestamp": record.get("Timestamp", ""),
+                            "comments": record.get("Feedback", "")
+                        })
+                
+            except Exception as e:
+                logger.error(f"Error checking individual sheet: {str(e)}")
+            
+            # Check team sheet
+            try:
+                team_sheet = self.client.open_by_key(TEAM_SHEET_ID)
+                team_worksheet = team_sheet.get_worksheet(0)
+                team_records = team_worksheet.get_all_records()
+                
+                processed_teams = set()  # To avoid duplicate team entries
+                
+                for record in team_records:
+                    if record.get("Email", "").lower() == email.lower():
+                        team_id = f"{record.get('Team Name', '')}_{record.get('Timestamp', '')}"
+                        
+                        if team_id not in processed_teams:
+                            # Handle multiple teams (stored as comma-separated or single team)
+                            selected_team = record.get("Selected Team", "")
+                            if "," in selected_team:
+                                teams = [t.strip() for t in selected_team.split(",")]
+                            else:
+                                teams = [selected_team] if selected_team else []
+                            
+                            all_teams.extend(teams)
+                            registrations.append({
+                                "id": len(registrations) + 1,
+                                "type": "team",
+                                "teams": teams,
+                                "team_name": record.get("Team Name", ""),
+                                "member_count": record.get("Member Count", 1),
+                                "timestamp": record.get("Timestamp", ""),
+                                "comments": record.get("Comments", "")
+                            })
+                            processed_teams.add(team_id)
+                
+            except Exception as e:
+                logger.error(f"Error checking team sheet: {str(e)}")
+            
+            # Remove duplicates from all_teams
+            unique_teams = list(set(all_teams))
+            
+            return {
+                "found": len(registrations) > 0,
+                "teams": unique_teams,
+                "registrations": registrations
+            }
+            
+        except Exception as e:
+            logger.error(f"Error checking existing registrations: {str(e)}")
+            return {"found": False, "teams": [], "registrations": []}
+    
     def save_individual_response(self, response_data: Dict[str, Any]) -> bool:
         """Save individual response to Google Sheets"""
         try:
@@ -75,7 +160,7 @@ class SheetsService:
             
             # Open the individual responses sheet
             sheet = self.client.open_by_key(INDIVIDUAL_SHEET_ID)
-            worksheet = sheet.get_worksheet(0)  # First worksheet
+            worksheet = sheet.get_worksheet(0)
             
             # Define headers for individual responses
             headers = [
@@ -86,6 +171,9 @@ class SheetsService:
             # Ensure headers are correct
             self._ensure_headers(worksheet, headers)
             
+            # Convert selected teams list to comma-separated string
+            selected_teams_str = ", ".join(response_data["selected_teams"])
+            
             # Prepare row data
             row_data = [
                 response_data["timestamp"],
@@ -93,7 +181,7 @@ class SheetsService:
                 response_data["crn"],
                 response_data["contact"],
                 response_data["email"],
-                response_data["selected_team"],
+                selected_teams_str,  # Multiple teams as comma-separated
                 response_data["comments"]
             ]
             
@@ -115,7 +203,7 @@ class SheetsService:
             
             # Open the team responses sheet
             sheet = self.client.open_by_key(TEAM_SHEET_ID)
-            worksheet = sheet.get_worksheet(0)  # First worksheet
+            worksheet = sheet.get_worksheet(0)
             
             # Define headers for team responses
             headers = [
@@ -130,11 +218,14 @@ class SheetsService:
             current_rows = len(worksheet.get_all_values())
             start_row = current_rows + 1
             
+            # Convert selected teams list to comma-separated string
+            selected_teams_str = ", ".join(response_data["selected_teams"])
+            
             # Prepare team data
             team_info = [
                 response_data["timestamp"],
                 response_data["team_name"],
-                response_data["selected_team"],
+                selected_teams_str,  # Multiple teams as comma-separated
                 str(response_data["member_count"]),
                 response_data["comments"]
             ]
@@ -209,6 +300,10 @@ def save_individual_response(response_data: Dict[str, Any]) -> bool:
 def save_team_response(response_data: Dict[str, Any]) -> bool:
     """Convenience function to save team response"""
     return sheets_service.save_team_response(response_data)
+
+def check_existing_registrations(email: str) -> Dict[str, Any]:
+    """Convenience function to check existing registrations"""
+    return sheets_service.check_existing_registrations(email)
 
 def test_sheets_connection() -> tuple[bool, str]:
     """Convenience function to test connection"""

@@ -66,11 +66,11 @@ def team_form(user_email):
 
         if submit_button:
             if not team_name.strip():
-                st.error("⚠ Please enter a team name")
+                st.error("⚠️ Please enter a team name")
                 return
 
-            if not st.session_state.selectedTeam:
-                st.error("⚠ Please select a team role first!")
+            if not st.session_state.selectedTeams:
+                st.error("⚠️ Please select at least one team role first!")
                 return
 
             valid_members = []
@@ -99,14 +99,14 @@ def team_form(user_email):
                         })
 
             if not valid_members and not members_with_partial_data:
-                st.error("⚠ Please add at least one complete team member with all required fields filled")
+                st.error("⚠️ Please add at least one complete team member with all required fields filled")
                 return
             elif not valid_members and members_with_partial_data:
-                st.error("⚠ Please complete all required fields for the team members you've started filling")
+                st.error("⚠️ Please complete all required fields for the team members you've started filling")
                 return
 
             if team_errors:
-                st.error("⚠ Please fix the following errors:")
+                st.error("⚠️ Please fix the following errors:")
                 for error in team_errors:
                     st.error(f"   • {error}")
             else:
@@ -114,7 +114,7 @@ def team_form(user_email):
                     "submission_type": "team",
                     "timestamp": datetime.now().isoformat(),
                     "team_name": team_name.strip(),
-                    "selected_team": st.session_state.selectedTeam,
+                    "selected_teams": st.session_state.selectedTeams,  # Multiple teams
                     "members": valid_members,
                     "member_count": len(valid_members),
                     "comments": comments.strip() if comments else ""
@@ -130,7 +130,7 @@ def team_form(user_email):
                             email_sent = send_confirmation_email(
                                 recipient_email=member["email"],
                                 recipient_name=member["name"],
-                                team_name=st.session_state.selectedTeam,
+                                team_name=", ".join(st.session_state.selectedTeams),  # Join multiple teams
                                 submission_type="Team",
                                 team_details={
                                     "team_name": team_name.strip(),
@@ -148,6 +148,7 @@ def team_form(user_email):
                     st.session_state.submission_type = "team"
                     st.session_state.team_name = team_name.strip()
                     st.session_state.member_count = len(valid_members)
+                    st.session_state.selected_teams = st.session_state.selectedTeams
                     st.session_state.successful_emails = sum(email_results)
                     st.rerun()
                 else:

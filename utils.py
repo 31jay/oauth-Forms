@@ -6,12 +6,16 @@ def initialize_session_state():
     """Initialize session state variables"""
     if "num_tabs" not in st.session_state:
         st.session_state.num_tabs = 1
-    if "selectedTeam" not in st.session_state:
-        st.session_state.selectedTeam = None
+    if "selectedTeams" not in st.session_state:  # Changed from selectedTeam to selectedTeams
+        st.session_state.selectedTeams = []
     if "show_exec_modal" not in st.session_state:
-        st.session_state.show_exec_modal = True
+        st.session_state.show_exec_modal = False  # Changed to False so it's collapsed initially after login
     if "form_submitted" not in st.session_state:
         st.session_state.form_submitted = False
+    if "allow_additional_registration" not in st.session_state:
+        st.session_state.allow_additional_registration = False
+    if "existing_teams" not in st.session_state:
+        st.session_state.existing_teams = []
     if "data" not in st.session_state:
         try:
             with open("team_guidelines.json") as f:
