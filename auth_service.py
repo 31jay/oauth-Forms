@@ -18,8 +18,8 @@ def display_login_button(auth_url):
     .google-login-btn {
         display: inline-flex;
         align-items: center;
-        background-color: #4285f4;
-        color: white;
+        background-color: #ffffff;
+        color: #4285f4;
         text-decoration: none;
         padding: 12px 24px;
         border-radius: 8px;
@@ -59,28 +59,12 @@ def display_login_button(auth_url):
         justify-content: center;
     }
     
-    .login-text {
-        text-align: center;
-        margin-bottom: 1rem;
-        color: #333;
-        font-size: 18px;
-        font-weight: 500;
-    }
-    
-    .login-subtitle {
-        text-align: center;
-        margin-bottom: 2rem;
-        color: #666;
-        font-size: 14px;
-    }
-    </style>
+        </style>
     """, unsafe_allow_html=True)
     
     st.markdown("""
     <div class="google-login-container">
         <div style="text-align: center; width: 100%;">
-            <div class="login-text">Welcome to Knowledge Sharing Circle</div>
-            <div class="login-subtitle">Please sign in with your Google account to continue</div>
             <a href="{}" class="google-login-btn">
                 <div class="google-icon">
                     <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
