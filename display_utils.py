@@ -189,8 +189,8 @@ def display_executive_modal(force_show=False):
                         st.session_state.show_exec_modal = False
                         st.rerun()
             
-            st.markdown("### 👥 Meet Our Executive Team")
-            st.markdown("---")
+            # st.markdown("### 👥 Meet Our Executive Team")
+            # st.markdown("---")
             
             try:
                 st.image("assets/executives.png")

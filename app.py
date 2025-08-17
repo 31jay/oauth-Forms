@@ -72,10 +72,10 @@ def main():
         col1, col2 = st.columns([1, 1])
         
         with col1:
-            display_circle_info()
+            display_executive_modal(force_show=True)
         
         with col2:
-            display_executive_modal(force_show=True)
+            display_circle_info()
         
         return
 
