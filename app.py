@@ -66,7 +66,7 @@ def main():
 
     # If not logged in, show login screen with executive poster and circle info
     if not user_info:
-        # st.info("Please log in with Google to continue with your registration.")
+        st.info("Please log in with Google to continue with your registration.")
         
         # Create columns for layout
         col1, col2 = st.columns([1, 1])
