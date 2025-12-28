@@ -48,8 +48,6 @@ def validate_form_data(name, crn, contact, email):
     
     if not crn.strip():
         errors.append("CRN is required")
-    elif not re.match(r"^(?:77(?=01(0[1-9]|[1-3][0-9]|4[0-9]))|(?:78|79|80|81)(?:01(0[1-9]|[1-3][0-9]|4[0-9])|02(0[1-9]|[1-8][0-9]|9[0-7])|0[34](0[1-9]|[1-3][0-9]|4[0-9])))$", crn):
-        errors.append("Please enter a valid CRN")
     
     if not contact.strip():
         errors.append("Contact number is required")
